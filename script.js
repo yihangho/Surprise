@@ -45,18 +45,25 @@ function Pixel(r, g, b, a) {
   this.a = a;
 }
 
+Pixel.average = function() {
+  var filteredPixels = Array.prototype.filter.call(arguments, function(p) {
+    return p && p.constructor == Pixel;
+  });
+
+  return filteredPixels.reduce(function(accumulator, current) {
+    accumulator.r += current.r / filteredPixels.length;
+    accumulator.g += current.g / filteredPixels.length;
+    accumulator.b += current.b / filteredPixels.length;
+    accumulator.a += current.a / filteredPixels.length;
+    return accumulator;
+  }, new Pixel(0, 0, 0, 0));
+};
+
 var fileInput = document.getElementById('fileInput');
 var submitBtn = document.getElementById('loadImageBtn');
 
 submitBtn.addEventListener('click', function() {
   getPixelsMatrix(fileInput, function(matrix) {
-    function average(a, b, c, d) { // a, b, c, d are pixels
-      return new Pixel((a.r + b.r + c.r + d.r) / 4,
-                       (a.g + b.g + c.g + d.g) / 4,
-                       (a.b + b.b + c.b + d.b) / 4,
-                       (a.a + b.a + c.a + d.a) / 4);
-    }
-
     function render(container, matrix, layer, x, y) {
       var pixel = matrix[layer][x][y];
       var scale = 256 / matrix[layer].length;
@@ -85,7 +92,7 @@ submitBtn.addEventListener('click', function() {
       pixelsLayers[i] = constructMatrix(1 << i, 1 << i);
       for (var x = 0; x < (1 << i); x++) {
         for (var y = 0; y < (1 << i); y++) {
-          pixelsLayers[i][x][y] = average(prevLayer[2*x][2*y], prevLayer[2*x][2*y+1], prevLayer[2*x+1][2*y], prevLayer[2*x+1][2*y+1]);
+          pixelsLayers[i][x][y] = Pixel.average(prevLayer[2*x][2*y], prevLayer[2*x][2*y+1], prevLayer[2*x+1][2*y], prevLayer[2*x+1][2*y+1]);
         }
       }
     }
