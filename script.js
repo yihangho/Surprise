@@ -11,16 +11,13 @@ function getPixelsMatrix(input, fn) {
       var aspectRatio = img.width / img.height;
       var viewportWidth  = document.documentElement.clientWidth;
       var viewportHeight = document.documentElement.clientHeight;
-      if (aspectRatio < 1) {
+      if (aspectRatio > 1) {
         canvas.width  = Math.min(img.width, viewportWidth);
-        canvas.height = canvas.width / aspectRatio;
+        canvas.height = Math.round(canvas.width / aspectRatio);
       } else {
         canvas.height = Math.min(img.height, viewportHeight);
-        canvas.width  = canvas.height * aspectRatio;
+        canvas.width  = Math.round(canvas.height * aspectRatio);
       }
-
-      canvas.width  = Math.round(canvas.width);
-      canvas.height = Math.round(canvas.height);
 
       canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
       var imageData = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
@@ -171,7 +168,7 @@ function CollectionsLayer(imageData) {
 
   do {
     this.layers.unshift(this.layers[0].nextLayer());
-  } while (this.layers[0].width !== 1 || this.layers[0].width !== 1);
+  } while (this.layers[0].width !== 1 || this.layers[0].height !== 1);
 }
 
 var fileInput    = document.getElementById('fileInput');
