@@ -121,10 +121,6 @@ function PixelsCollection(width, height, actualWidth, actualHeight) {
     if (valid(collection, x, y)) collection[x][y] = val;
   };
 
-  this.renderOnSVG = function(layer, x, y, svg) {
-
-  };
-
   this.width  = width;
   this.height = height;
   // We need actual width and height to correctly render partial pixels
@@ -178,14 +174,19 @@ function CollectionsLayer(imageData) {
   } while (this.layers[0].width !== 1 || this.layers[0].width !== 1);
 }
 
-var fileInput = document.getElementById('fileInput');
-var submitBtn = document.getElementById('loadImageBtn');
+var fileInput    = document.getElementById('fileInput');
+var submitBtn    = document.getElementById('loadImageBtn');
+var svgContainer = document.getElementById('svgContainer');
+var drawingBoard = null;
 
 submitBtn.addEventListener('click', function() {
   getPixelsMatrix(fileInput, function(imageData) {
+    if (drawingBoard) svgContainer.removeChild(drawingBoard);
+
     var layers = new CollectionsLayer(imageData);
 
-    var drawingBoard = document.getElementById('drawingBoard');
+    drawingBoard = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svgContainer.appendChild(drawingBoard);
     drawingBoard.setAttributeNS(null, 'width',  layers.width);
     drawingBoard.setAttributeNS(null, 'height', layers.height);
 
