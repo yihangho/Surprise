@@ -122,28 +122,7 @@ function PixelsCollection(width, height, actualWidth, actualHeight) {
   };
 
   this.renderOnSVG = function(layer, x, y, svg) {
-    var svgWidth  = svg.getAttributeNS(null, 'width');
-    var svgHeight = svg.getAttributeNS(null, 'height');
-    var scale     = svgWidth / this.actualWidth;
-    var radius    = scale / 2;
 
-    if (!this.get(x, y)) {
-      return;
-    }
-
-    var circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-    circle.setAttributeNS(null, 'cx',   y * scale + radius);
-    circle.setAttributeNS(null, 'cy',   x * scale + radius);
-    circle.setAttributeNS(null, 'r',    radius);
-    circle.setAttributeNS(null, 'fill', this.get(x, y).toRgba());
-
-    circle.setAttributeNS('surprise', 'layer', layer);
-    circle.setAttributeNS('surprise', 'x', x);
-    circle.setAttributeNS('surprise', 'y', y);
-
-    svg.appendChild(circle);
-
-    return circle;
   };
 
   this.width  = width;
@@ -167,22 +146,50 @@ PixelsCollection.fromImageData = function(imageData) {
   return output;
 }
 
+function CollectionsLayer(imageData) {
+  if (typeof this.constructor.prototype.renderOnSVG !== 'function') {
+    this.constructor.prototype.renderOnSVG = function(layer, x, y, svg) {
+      if (!this.layers[layer].get(x, y)) return;
+
+      var scale     = this.width / this.layers[layer].actualWidth;
+      var radius    = scale / 2;
+
+      var circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      circle.setAttributeNS(null, 'cx',   y * scale + radius);
+      circle.setAttributeNS(null, 'cy',   x * scale + radius);
+      circle.setAttributeNS(null, 'r',    radius);
+      circle.setAttributeNS(null, 'fill', this.layers[layer].get(x, y).toRgba());
+
+      circle.setAttributeNS('surprise', 'layer', layer);
+      circle.setAttributeNS('surprise', 'x', x);
+      circle.setAttributeNS('surprise', 'y', y);
+
+      svg.appendChild(circle);
+
+      return circle;
+    }
+  }
+  this.layers = [PixelsCollection.fromImageData(imageData)];
+  this.width  = this.layers[0].width;
+  this.height = this.layers[0].height;
+
+  do {
+    this.layers.unshift(this.layers[0].nextLayer());
+  } while (this.layers[0].width !== 1 || this.layers[0].width !== 1);
+}
+
 var fileInput = document.getElementById('fileInput');
 var submitBtn = document.getElementById('loadImageBtn');
 
 submitBtn.addEventListener('click', function() {
   getPixelsMatrix(fileInput, function(imageData) {
-    var layers = [PixelsCollection.fromImageData(imageData)];
-
-    do {
-      layers.unshift(layers[0].nextLayer());
-    } while (layers[0].width !== 1 || layers[0].width !== 1);
+    var layers = new CollectionsLayer(imageData);
 
     var drawingBoard = document.getElementById('drawingBoard');
-    drawingBoard.setAttributeNS(null, 'width',  layers[layers.length - 1].width);
-    drawingBoard.setAttributeNS(null, 'height', layers[layers.length - 1].height);
+    drawingBoard.setAttributeNS(null, 'width',  layers.width);
+    drawingBoard.setAttributeNS(null, 'height', layers.height);
 
-    layers[0].renderOnSVG(0, 0, 0, drawingBoard);
+    layers.renderOnSVG(0, 0, 0, drawingBoard);
 
     var fencing = null;
 
@@ -214,10 +221,10 @@ submitBtn.addEventListener('click', function() {
       if (layer != layers.length - 1) {
         drawingBoard.removeChild(circle);
 
-        layers[layer+1].renderOnSVG(layer+1, 2*xIndex,   2*yIndex,   drawingBoard);
-        layers[layer+1].renderOnSVG(layer+1, 2*xIndex+1, 2*yIndex,   drawingBoard);
-        layers[layer+1].renderOnSVG(layer+1, 2*xIndex,   2*yIndex+1, drawingBoard);
-        layers[layer+1].renderOnSVG(layer+1, 2*xIndex+1, 2*yIndex+1, drawingBoard);
+        layers.renderOnSVG(layer+1, 2*xIndex,   2*yIndex,   drawingBoard);
+        layers.renderOnSVG(layer+1, 2*xIndex+1, 2*yIndex,   drawingBoard);
+        layers.renderOnSVG(layer+1, 2*xIndex,   2*yIndex+1, drawingBoard);
+        layers.renderOnSVG(layer+1, 2*xIndex+1, 2*yIndex+1, drawingBoard);
 
         fencing = {
           x: (x <= cx ? cx - r : cx),
