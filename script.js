@@ -191,7 +191,7 @@ submitBtn.addEventListener('click', function() {
 
     layers.renderOnSVG(0, 0, 0, drawingBoard);
 
-    var fencing = null;
+    var ignoredElement = null;
 
     var drawingBoardTop  = drawingBoard.getBoundingClientRect().top;
     var drawingBoardLeft = drawingBoard.getBoundingClientRect().left;
@@ -200,13 +200,11 @@ submitBtn.addEventListener('click', function() {
       var x = e.x - drawingBoardLeft;
       var y = e.y - drawingBoardTop;
 
-      if (fencing && x >= fencing.x && x <= fencing.x + fencing.r &&
-                     y >= fencing.y && y <= fencing.y + fencing.r) {
+      if (ignoredElement === document.elementFromPoint(e.x, e.y)) {
           return;
       }
       if (e.toElement.tagName !== 'circle') {
-        fencing = null;
-        return;
+        return ignoredElement = null;
       }
 
       var circle = e.toElement;
@@ -226,11 +224,7 @@ submitBtn.addEventListener('click', function() {
         layers.renderOnSVG(layer+1, 2*xIndex,   2*yIndex+1, drawingBoard);
         layers.renderOnSVG(layer+1, 2*xIndex+1, 2*yIndex+1, drawingBoard);
 
-        fencing = {
-          x: (x <= cx ? cx - r : cx),
-          y: (y <= cy ? cy - r : cy),
-          r: r
-        };
+        ignoredElement = document.elementFromPoint(e.x, e.y);
       }
     });
   });
