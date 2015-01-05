@@ -1,29 +1,31 @@
-function constructMatrix(x, y) {
-  var output = [];
-  for (var i = 0; i < x; i++) output.push(new Array(y));
-  return output;
-}
-
 function getPixelsMatrix(input, fn) {
   var file = input.files[0];
   var fr   = new FileReader();
   fr.addEventListener('load', function() {
     var img = new Image();
+
     img.addEventListener('load', function() {
       var canvas = document.createElement('canvas');
-      canvas.width = canvas.height = 256;
-      canvas.getContext('2d').drawImage(img, 0, 0);
-      var imageData = canvas.getContext('2d').getImageData(0, 0, 256, 256).data;
-      var output = constructMatrix(256, 256);
 
-      for (var i = 0; i < 256; i++) {
-        for (var j = 0; j < 256; j++) {
-          var base = (i * 256 + j) * 4;
-          output[i][j] = new Pixel(imageData[base], imageData[base+1], imageData[base+2], imageData[base+3]);
-        }
+      // Perform scaling such that the canvas is at most as large as the viewport
+      var aspectRatio = img.width / img.height;
+      var viewportWidth  = document.documentElement.clientWidth;
+      var viewportHeight = document.documentElement.clientHeight;
+      if (aspectRatio < 1) {
+        canvas.width  = Math.min(img.width, viewportWidth);
+        canvas.height = canvas.width / aspectRatio;
+      } else {
+        canvas.height = Math.min(img.height, viewportHeight);
+        canvas.width  = canvas.height * aspectRatio;
       }
 
-      if (typeof fn === 'function') fn(output);
+      canvas.width  = Math.round(canvas.width);
+      canvas.height = Math.round(canvas.height);
+
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      var imageData = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
+
+      if (typeof fn === 'function') fn(imageData);
     });
     img.src = fr.result;
   });
@@ -59,49 +61,128 @@ Pixel.average = function() {
   }, new Pixel(0, 0, 0, 0));
 };
 
+function PixelsCollection(width, height, actualWidth, actualHeight) {
+  if (typeof this.constructor.prototype.render !== 'function') {
+    this.constructor.prototype.render = function() {
+      // Renders and returns the current collection on a canvas
+      // Mainly for debugging purpose
+      var canvas    = document.createElement('canvas');
+      canvas.width  = this.width;
+      canvas.height = this.height;
+      var context   = canvas.getContext('2d');
+      for (var i = 0; i < this.height; i++) {
+        for (var j = 0; j < this.width; j++) {
+          if (this.get(i, j)) {
+            context.fillStyle = this.get(i, j).toRgba();
+            context.fillRect(j, i, 1, 1);
+          }
+        }
+      }
+
+      return canvas;
+    };
+
+    this.constructor.prototype.nextLayer = function() {
+      // returns the scale down version
+      var width   = this.actualWidth / 2;
+      var height  = this.actualHeight / 2;
+      var iWidth  = Math.ceil(this.width / 2);
+      var iHeight = Math.ceil(this.height / 2);
+      var output  = new PixelsCollection(iWidth, iHeight, width, height);
+
+      for (var i = 0; i < iHeight; i++) {
+        for (var j = 0; j < iWidth; j++) {
+          var averagePixel = Pixel.average(this.get(2*i,   2*j),
+                                           this.get(2*i+1, 2*j),
+                                           this.get(2*i,   2*j+1),
+                                           this.get(2*i+1, 2*j+1));
+          output.set(i, j, averagePixel);
+        }
+      }
+
+      return output;
+    }
+  }
+  var collection = [];
+  for (var i = 0; i < height; i++) collection.push(new Array(width));
+
+  function valid(collection, x, y) {
+    return x >= 0 && x < collection.length && y >= 0 && y < collection[0].length;
+  }
+  this.get = function(x, y) {
+    if (valid(collection, x, y)) {
+      return collection[x][y];
+    } else {
+      return null;
+    }
+  };
+
+  this.set = function(x, y, val) {
+    if (valid(collection, x, y)) collection[x][y] = val;
+  };
+
+  this.renderOnSVG = function(layer, x, y, svg) {
+    var svgWidth  = svg.getAttributeNS(null, 'width');
+    var svgHeight = svg.getAttributeNS(null, 'height');
+    var scale     = svgWidth / this.actualWidth;
+    var radius    = scale / 2;
+
+    if (!this.get(x, y)) {
+      return;
+    }
+
+    var circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    circle.setAttributeNS(null, 'cx',   y * scale + radius);
+    circle.setAttributeNS(null, 'cy',   x * scale + radius);
+    circle.setAttributeNS(null, 'r',    radius);
+    circle.setAttributeNS(null, 'fill', this.get(x, y).toRgba());
+
+    circle.setAttributeNS('surprise', 'layer', layer);
+    circle.setAttributeNS('surprise', 'x', x);
+    circle.setAttributeNS('surprise', 'y', y);
+
+    svg.appendChild(circle);
+
+    return circle;
+  };
+
+  this.width  = width;
+  this.height = height;
+  // We need actual width and height to correctly render partial pixels
+  this.actualWidth  = actualWidth;
+  this.actualHeight = actualHeight;
+}
+
+PixelsCollection.fromImageData = function(imageData) {
+  var output = new PixelsCollection(imageData.width, imageData.height, imageData.width, imageData.height);
+
+  for (var i = 0; i < imageData.height; i++) {
+    for (var j = 0; j < imageData.width; j++) {
+      var base  = (i * imageData.width + j) * 4;
+      var pixel = new Pixel(imageData.data[base], imageData.data[base+1], imageData.data[base+2], imageData.data[base+3]);
+      output.set(i, j, pixel);
+    }
+  }
+
+  return output;
+}
+
 var fileInput = document.getElementById('fileInput');
 var submitBtn = document.getElementById('loadImageBtn');
 
 submitBtn.addEventListener('click', function() {
-  getPixelsMatrix(fileInput, function(matrix) {
-    function render(container, matrix, layer, x, y) {
-      var pixel = matrix[layer][x][y];
-      var scale = 256 / matrix[layer].length;
-      var radius = scale / 2;
+  getPixelsMatrix(fileInput, function(imageData) {
+    var layers = [PixelsCollection.fromImageData(imageData)];
 
-      var circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-      circle.setAttributeNS(null, 'cx',   x * scale + radius);
-      circle.setAttributeNS(null, 'cy',   y * scale + radius);
-      circle.setAttributeNS(null, 'r',    radius);
-      circle.setAttributeNS(null, 'fill', pixel.toRgba());
-
-      circle.setAttributeNS('surprise', 'layer', layer);
-      circle.setAttributeNS('surprise', 'x', x);
-      circle.setAttributeNS('surprise', 'y', y);
-
-      container.appendChild(circle);
-
-      return circle;
-    }
-
-    var pixelsLayers = new Array(9);
-    pixelsLayers[8] = matrix;
-
-    for (var i = 7; i >= 0; i--) {
-      var prevLayer = pixelsLayers[i+1];
-      pixelsLayers[i] = constructMatrix(1 << i, 1 << i);
-      for (var x = 0; x < (1 << i); x++) {
-        for (var y = 0; y < (1 << i); y++) {
-          pixelsLayers[i][x][y] = Pixel.average(prevLayer[2*x][2*y], prevLayer[2*x][2*y+1], prevLayer[2*x+1][2*y], prevLayer[2*x+1][2*y+1]);
-        }
-      }
-    }
-
-    // We have all layers by now
-    // Let's paint layer 0 on the drawing board
+    do {
+      layers.unshift(layers[0].nextLayer());
+    } while (layers[0].width !== 1 || layers[0].width !== 1);
 
     var drawingBoard = document.getElementById('drawingBoard');
-    render(drawingBoard, pixelsLayers, 0, 0, 0);
+    drawingBoard.setAttributeNS(null, 'width',  layers[layers.length - 1].width);
+    drawingBoard.setAttributeNS(null, 'height', layers[layers.length - 1].height);
+
+    layers[0].renderOnSVG(0, 0, 0, drawingBoard);
 
     var fencing = null;
 
@@ -130,13 +211,13 @@ submitBtn.addEventListener('click', function() {
       var xIndex = parseInt(circle.getAttributeNS('surprise', 'x'));
       var yIndex = parseInt(circle.getAttributeNS('surprise', 'y'));
 
-      if (layer != 8) {
+      if (layer != layers.length - 1) {
         drawingBoard.removeChild(circle);
 
-        render(drawingBoard, pixelsLayers, layer+1, 2*xIndex,   2*yIndex);
-        render(drawingBoard, pixelsLayers, layer+1, 2*xIndex+1, 2*yIndex);
-        render(drawingBoard, pixelsLayers, layer+1, 2*xIndex,   2*yIndex+1);
-        render(drawingBoard, pixelsLayers, layer+1, 2*xIndex+1, 2*yIndex+1);
+        layers[layer+1].renderOnSVG(layer+1, 2*xIndex,   2*yIndex,   drawingBoard);
+        layers[layer+1].renderOnSVG(layer+1, 2*xIndex+1, 2*yIndex,   drawingBoard);
+        layers[layer+1].renderOnSVG(layer+1, 2*xIndex,   2*yIndex+1, drawingBoard);
+        layers[layer+1].renderOnSVG(layer+1, 2*xIndex+1, 2*yIndex+1, drawingBoard);
 
         fencing = {
           x: (x <= cx ? cx - r : cx),
