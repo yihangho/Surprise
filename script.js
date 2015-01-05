@@ -175,11 +175,10 @@ function CollectionsLayer(imageData) {
 }
 
 var fileInput    = document.getElementById('fileInput');
-var submitBtn    = document.getElementById('loadImageBtn');
 var svgContainer = document.getElementById('svgContainer');
 var drawingBoard = null;
 
-submitBtn.addEventListener('click', function() {
+fileInput.addEventListener('change', function() {
   getPixelsMatrix(fileInput, function(imageData) {
     if (drawingBoard) svgContainer.removeChild(drawingBoard);
 
