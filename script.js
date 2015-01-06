@@ -170,7 +170,6 @@ function CollectionsLayer(imageData) {
   } while (this.layers[0].width !== 1 || this.layers[0].height !== 1);
 }
 
-var svgContainer = document.getElementById('svgContainer');
 var drawingBoard = null;
 
 document.body.addEventListener('dragenter', function(e) { e.preventDefault(); });
@@ -182,13 +181,19 @@ document.body.addEventListener('drop', function(e) {
   if (!file || !/^image/.test(file.type)) {
     return;
   }
+
+  var instruction  = document.getElementById('instructionMsg');
+  if (instruction) {
+    document.body.removeChild(instruction);
+  }
+
   getImageDataFromFile(file, function(imageData) {
-    if (drawingBoard) svgContainer.removeChild(drawingBoard);
+    if (drawingBoard) document.body.removeChild(drawingBoard);
 
     var layers = new CollectionsLayer(imageData);
 
     drawingBoard = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svgContainer.appendChild(drawingBoard);
+    document.body.appendChild(drawingBoard);
     drawingBoard.setAttributeNS(null, 'width',  layers.width);
     drawingBoard.setAttributeNS(null, 'height', layers.height);
 
