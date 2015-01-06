@@ -1,5 +1,4 @@
-function getPixelsMatrix(input, fn) {
-  var file = input.files[0];
+function getImageDataFromFile(file, fn) {
   var fr   = new FileReader();
   fr.addEventListener('load', function() {
     var img = new Image();
@@ -171,12 +170,19 @@ function CollectionsLayer(imageData) {
   } while (this.layers[0].width !== 1 || this.layers[0].height !== 1);
 }
 
-var fileInput    = document.getElementById('fileInput');
 var svgContainer = document.getElementById('svgContainer');
 var drawingBoard = null;
 
-fileInput.addEventListener('change', function() {
-  getPixelsMatrix(fileInput, function(imageData) {
+document.body.addEventListener('dragenter', function(e) { e.preventDefault(); });
+document.body.addEventListener('dragover', function(e) { e.preventDefault(); });
+
+document.body.addEventListener('drop', function(e) {
+  e.preventDefault();
+  var file = e.dataTransfer.files[0];
+  if (!file || !/^image/.test(file.type)) {
+    return;
+  }
+  getImageDataFromFile(file, function(imageData) {
     if (drawingBoard) svgContainer.removeChild(drawingBoard);
 
     var layers = new CollectionsLayer(imageData);
