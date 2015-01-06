@@ -19,10 +19,27 @@
           -ms-transform: translateY(-50%);
               transform: translateY(-50%);
     }
+
+    #spinContainer {
+      width: 100%;
+      height: 100%;
+      position: fixed;
+      top: 0;
+      left: 0;
+      background-color: rgba(255, 255, 255, 0.7);
+      z-index: 9999;
+      display: none;
+    }
+
+    #spinContainer.active {
+      display: block;
+    }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/spin.js/2.0.1/spin.min.js"></script>
   </head>
   <body>
     <div class="verticallyCenter" id="instructionMsg">Drop an image file here</div>
+    <div id="spinContainer"></div>
     <script src="script.js"></script>
   </body>
 </html>

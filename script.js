@@ -172,6 +172,9 @@ function CollectionsLayer(imageData) {
 
 var drawingBoard = null;
 
+var spinContainer = document.getElementById('spinContainer');
+var spinner       = new Spinner().spin(spinContainer);
+
 document.body.addEventListener('dragenter', function(e) { e.preventDefault(); });
 document.body.addEventListener('dragover', function(e) { e.preventDefault(); });
 
@@ -181,6 +184,8 @@ document.body.addEventListener('drop', function(e) {
   if (!file || !/^image/.test(file.type)) {
     return;
   }
+
+  spinContainer.className = "active";
 
   var instruction  = document.getElementById('instructionMsg');
   if (instruction) {
@@ -198,6 +203,8 @@ document.body.addEventListener('drop', function(e) {
     drawingBoard.setAttributeNS(null, 'height', layers.height);
 
     layers.renderOnSVG(0, 0, 0, drawingBoard);
+
+    spinContainer.className = "";
 
     var ignoredElement = null;
 
