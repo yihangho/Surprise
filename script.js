@@ -1,4 +1,28 @@
 function getImageDataFromFile(file, fn) {
+  function getLargestDimensions(w, h) {
+    var aspectRatio = w / h;
+    var maxWidth    = document.documentElement.clientWidth;
+    var maxHeight   = document.documentElement.clientHeight;
+
+    var width1  = Math.min(w, maxWidth);
+    var height1 = Math.round(width1 / aspectRatio);
+
+    var height2 = Math.min(h, maxHeight);
+    var width2  = Math.round(height2 * aspectRatio);
+
+    if (width1 <= maxWidth && height1 <= maxHeight) {
+      return {
+        width: width1,
+        height: height1
+      };
+    } else {
+      return {
+        width: width2,
+        height: height2
+      };
+    }
+  }
+
   var fr   = new FileReader();
   fr.addEventListener('load', function() {
     var img = new Image();
@@ -7,16 +31,9 @@ function getImageDataFromFile(file, fn) {
       var canvas = document.createElement('canvas');
 
       // Perform scaling such that the canvas is at most as large as the viewport
-      var aspectRatio = img.width / img.height;
-      var viewportWidth  = document.documentElement.clientWidth;
-      var viewportHeight = document.documentElement.clientHeight;
-      if (aspectRatio > 1) {
-        canvas.width  = Math.min(img.width, viewportWidth);
-        canvas.height = Math.round(canvas.width / aspectRatio);
-      } else {
-        canvas.height = Math.min(img.height, viewportHeight);
-        canvas.width  = Math.round(canvas.height * aspectRatio);
-      }
+      var largestDimensions = getLargestDimensions(img.width, img.height);
+      canvas.width  = largestDimensions.width;
+      canvas.height = largestDimensions.height;
 
       canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
       var imageData = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
