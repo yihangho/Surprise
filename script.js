@@ -218,6 +218,8 @@ document.body.addEventListener('drop', function(e) {
     document.body.appendChild(drawingBoard);
     drawingBoard.setAttributeNS(null, 'width',  layers.width);
     drawingBoard.setAttributeNS(null, 'height', layers.height);
+    drawingBoard.style.position = "relative";
+    drawingBoard.style.top      = (document.documentElement.clientHeight - layers.height) / 2;
 
     layers.renderOnSVG(0, 0, 0, drawingBoard);
 
