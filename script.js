@@ -212,17 +212,25 @@ document.body.addEventListener('drop', function(e) {
     var drawingBoardLeft = drawingBoard.getBoundingClientRect().left;
 
     drawingBoard.addEventListener('mousemove', function(e) {
-      var x = e.x - drawingBoardLeft;
-      var y = e.y - drawingBoardTop;
+      var targetElement = (e.toElement || e.target);
+      var clientX, clientY;
 
-      if (ignoredElement === document.elementFromPoint(e.x, e.y)) {
+      if ("x" in e) {
+        clientX = e.x;
+        clientY = e.y;
+      } else if ("layerX" in e) {
+        clientX = e.clientX;
+        clientY = e.clientY;
+      }
+
+      if (ignoredElement === document.elementFromPoint(clientX, clientY)) {
           return;
       }
-      if (e.toElement.tagName !== 'circle') {
+      if (!targetElement || targetElement.tagName !== 'circle') {
         return ignoredElement = null;
       }
 
-      var circle = e.toElement;
+      var circle = targetElement;
       var cx = parseFloat(circle.getAttributeNS(null, 'cx'));
       var cy = parseFloat(circle.getAttributeNS(null, 'cy'));
       var r  = parseFloat(circle.getAttributeNS(null, 'r'));
@@ -239,7 +247,7 @@ document.body.addEventListener('drop', function(e) {
         layers.renderOnSVG(layer+1, 2*xIndex,   2*yIndex+1, drawingBoard);
         layers.renderOnSVG(layer+1, 2*xIndex+1, 2*yIndex+1, drawingBoard);
 
-        ignoredElement = document.elementFromPoint(e.x, e.y);
+        ignoredElement = document.elementFromPoint(clientX, clientY);
       }
     });
   });
