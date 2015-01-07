@@ -258,7 +258,7 @@ document.body.addEventListener('drop', function(e) {
       var xIndex = parseInt(circle.getAttributeNS('surprise', 'x'));
       var yIndex = parseInt(circle.getAttributeNS('surprise', 'y'));
 
-      if (layer != layers.length - 1) {
+      if (layer != layers.layers.length - 1) {
         drawingBoard.removeChild(circle);
 
         layers.renderOnSVG(layer+1, 2*xIndex,   2*yIndex,   drawingBoard);
