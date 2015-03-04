@@ -1,6 +1,6 @@
 # Surprise
 Surprise lets you (in a way) interact with the quadtree of images to produce
-dramatic effect like this: ![Cool Gif](https://d1ro8r1rbfn3jf.cloudfront.net/ms_14444/JyqIHbWPyWHwqDmsGUSGH4Xrh5H9Vu/screencast%2B2015-01-06%2B16-54-09.gif?Expires=1420621284&Signature=nALL5Z2a458SPiapPXZV2oPlG3OtWOahao6T4BEmgkBmA5-0kgrjYZPfSLkxbufl77OoW4lC1oXmdCbDKGIOfjGGHge94ikaB2kHYfgyYoLvca2iYmFO4uiZzkmzXn32g0rqLeUj59lyIOCeEazEg--xNZSNX6NQVijT7SvWVZuc0R6qmHuv2FCi6RS7O4BKqB-DfKh-EnUY7u~OI4SrYRh~Yiq6WZuo-s4p0giA3ww~5qsDN7MS~WInxJi8ACsXZ7FG8lhNF5635LZg-Q3Tm~Irpo2cZXV2BIYLcf~oy31oEv-yow-FN4Zn6K6LSitGFdJQoilxI~PECNztDIuweg__&Key-Pair-Id=APKAJHEJJBIZWFB73RSA)
+dramatic effect like this: ![Cool Gif](http://i.imgur.com/9xkPlL7.gif)
 
 ## Acknowledgement
 I am sure that I am not the very first one to implement stuff like this, but I
